@@ -31,7 +31,7 @@ import java.util.concurrent.Executors;
 
 import com.oxvsys.ImageClassifier.sample.SampleDataProvider;
 
-public class MainActivity extends AppCompatActivity {
+public class  MainActivity extends AppCompatActivity {
     private static final int INPUT_SIZE = 224;
     private static final int IMAGE_MEAN = 117;
     private static final float IMAGE_STD = 1;
