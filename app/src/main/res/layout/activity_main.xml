@@ -45,7 +45,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/save" />
+            android:text="@string/save"
+            android:id="@+id/btnSaved"/>
 
     </LinearLayout>
 
@@ -74,7 +75,7 @@
         android:textColor="@android:color/black" />
 
     <Button
-        android:id="@+id/btnSaved"
+        android:id="@+id/btnViewSaved"
         android:layout_width="173dp"
         android:layout_height="48dp"
         android:layout_gravity="bottom|right"

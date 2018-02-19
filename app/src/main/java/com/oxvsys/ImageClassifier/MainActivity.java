@@ -1,5 +1,6 @@
 package com.oxvsys.ImageClassifier;
 
+import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import android.widget.ImageView;
 
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.oxvsys.ImageClassifier.model.DataItem;
 import com.wonderkiln.camerakit.CameraKitError;
@@ -22,6 +24,7 @@ import com.wonderkiln.camerakit.CameraKitImage;
 import com.wonderkiln.camerakit.CameraKitVideo;
 import com.wonderkiln.camerakit.CameraView;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,7 +34,7 @@ import java.util.concurrent.Executors;
 
 import com.oxvsys.ImageClassifier.sample.SampleDataProvider;
 
-public class  MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity {
     private static final int INPUT_SIZE = 224;
     private static final int IMAGE_MEAN = 117;
     private static final float IMAGE_STD = 1;
@@ -46,18 +49,23 @@ public class  MainActivity extends AppCompatActivity {
     private ImageView imageViewResult;
     private CameraView cameraView;
     private Button btnViewSave;
-
+    public Button btnSave;
+    public ImageView profileImageView;
+    public Bitmap bitmap;
+    public Bitmap bitmapNom;
+    public DbHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        cameraView = (CameraView) findViewById(R.id.cameraView);
-        imageViewResult = (ImageView) findViewById(R.id.imageViewResult);
-        textViewResult = (TextView) findViewById(R.id.textViewResult);
+        cameraView = findViewById(R.id.cameraView);
+        imageViewResult = findViewById(R.id.imageViewResult);
+        textViewResult = findViewById(R.id.textViewResult);
         textViewResult.setMovementMethod(new ScrollingMovementMethod());
-        btnToggleCamera = (Button) findViewById(R.id.btnToggleCamera);
-        btnDetectObject = (Button) findViewById(R.id.btnDetectObject);
+        btnToggleCamera = findViewById(R.id.btnToggleCamera);
+        btnDetectObject = findViewById(R.id.btnDetectObject);
         cameraView.addCameraKitListener(new CameraKitEventListener() {
             @Override
             public void onEvent(CameraKitEvent cameraKitEvent) {
@@ -71,18 +79,12 @@ public class  MainActivity extends AppCompatActivity {
 
             @Override
             public void onImage(CameraKitImage cameraKitImage) {
-
-                Bitmap bitmap = cameraKitImage.getBitmap();
-
-                bitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, false);
-
+                bitmap = cameraKitImage.getBitmap();
+                bitmapNom = bitmap;
                 imageViewResult.setImageBitmap(bitmap);
-
+                bitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, false);
                 final List<Classifier.Recognition> results = classifier.recognizeImage(bitmap);
-
                 textViewResult.setText(results.toString());
-                Log.d("String:", String.valueOf(results));
-
             }
 
             @Override
@@ -103,12 +105,28 @@ public class  MainActivity extends AppCompatActivity {
             }
         });
         initTensorFlowAndLoadModel();
-        btnViewSave = findViewById(R.id.btnSaved);
+        btnSave = findViewById(R.id.btnSaved);
+        btnViewSave = findViewById(R.id.btnViewSaved);
+        //Opens list
         btnViewSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, ListItem.class);
+                Intent intent = new Intent(MainActivity.this, DetailsActivity.class);
                 startActivity(intent);
+
+            }
+        });
+        btnSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                dbHelper = new DbHelper(MainActivity.this);
+                Bitmap bitmapNew = bitmapNom;
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                bitmapNew.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+                byte[] data = baos.toByteArray();
+                dbHelper.addToDb(data);
+                Toast.makeText(MainActivity.this, "Image saved to DB successfully", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -136,6 +154,7 @@ public class  MainActivity extends AppCompatActivity {
             }
         });
     }
+
 
     private void initTensorFlowAndLoadModel() {
         executor.execute(new Runnable() {
